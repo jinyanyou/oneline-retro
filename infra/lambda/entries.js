@@ -82,31 +82,29 @@ async function listEntries(userId, query) {
   const from = query.from;
   const to = query.to;
 
-  // 기간이 주어지면 SK range query, 아니면 최근 것부터 전부
-  let keyExpr = 'userId = :u';
-  const values = { ':u': { S: userId } };
+  const params = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: 'userId = :u',
+    ExpressionAttributeValues: { ':u': { S: userId } },
+    ScanIndexForward: false, // 최신 날짜 먼저
+    Limit: Math.min(Number(query.limit) || 100, 365),
+  };
 
+  // 기간이 주어지면 SK range query, 아니면 최근 것부터 전부.
+  // date 는 DynamoDB 예약어라 이름을 치환해야 하는데, 쓰지도 않는
+  // ExpressionAttributeNames 를 넘기면 ValidationException 이 난다.
+  // 그래서 범위 조회일 때만 붙인다.
   if (from && to) {
     if (!DATE_RE.test(from) || !DATE_RE.test(to)) {
       return json(400, { message: 'from, to 는 YYYY-MM-DD 형식이어야 합니다.' });
     }
-    keyExpr += ' AND #d BETWEEN :from AND :to';
-    values[':from'] = { S: from };
-    values[':to'] = { S: to };
+    params.KeyConditionExpression += ' AND #d BETWEEN :from AND :to';
+    params.ExpressionAttributeNames = { '#d': 'date' };
+    params.ExpressionAttributeValues[':from'] = { S: from };
+    params.ExpressionAttributeValues[':to'] = { S: to };
   }
 
-  const limit = Math.min(Number(query.limit) || 100, 365);
-
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: TABLE_NAME,
-      KeyConditionExpression: keyExpr,
-      ExpressionAttributeNames: { '#d': 'date' },
-      ExpressionAttributeValues: values,
-      ScanIndexForward: false, // 최신 날짜 먼저
-      Limit: limit,
-    }),
-  );
+  const res = await ddb.send(new QueryCommand(params));
 
   return json(200, { entries: (res.Items || []).map(fromItem) });
 }
