@@ -2,6 +2,13 @@
 
 하루를 한 줄로 기록하고 지난 기록을 돌아보는 서비스.
 
+지난 기록은 세 가지로 본다.
+
+- **목록** — 최신 날짜부터. 각 줄에서 바로 수정·삭제
+- **달력** — 기록한 날은 튀어나온 칸에 기분 얼굴이 찍힌다. 빈 날을 눌러
+  지난 날의 기록을 채워 넣을 수도 있다
+- **통계** — 연속 기록 일수, 최장 연속, 이번 달 기록률, 기분 분포
+
 ## 구성
 
 | 계층 | 서비스 |
@@ -21,7 +28,11 @@ AWS 계정: `514090179227` / 리전: `ap-northeast-2` (서울)
 ```
 .
 ├── src/                  프론트엔드
-│   ├── App.tsx           화면 전체
+│   ├── App.tsx           창 전체 + 입력 칸 + 탭
+│   ├── Calendar.tsx      달력 탭
+│   ├── Stats.tsx         통계 탭
+│   ├── date.ts           날짜 키 다루기
+│   ├── moods.ts          기분 목록
 │   ├── api.ts            API 호출 + 토큰 첨부
 │   └── amplify-config.ts Cognito 설정
 ├── infra/                백엔드 (AWS CDK)
@@ -112,5 +123,7 @@ DynamoDB 테이블과 User Pool 은 `RemovalPolicy.DESTROY` 라 함께 삭제된
 
 ## 알려진 사항
 
-- 번들 크기가 약 640KB(gzip 177KB)다. 대부분 `@aws-amplify/ui-react` 로그인 UI 다.
+- 번들 크기가 약 780KB(gzip 214KB)다. 대부분 `@aws-amplify/ui-react` 로그인 UI 다.
   줄이려면 로그인 화면을 직접 만들고 `aws-amplify/auth` 만 쓰면 된다.
+- 앱은 최근 365일치를 한 번에 받아 달력과 통계를 그린다. 그보다 오래된 기록은
+  `GET /entries?from=&to=` 로 따로 가져와야 한다.

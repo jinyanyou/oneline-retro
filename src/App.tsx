@@ -4,14 +4,11 @@ import { I18n } from 'aws-amplify/utils';
 import '@aws-amplify/ui-react/styles.css';
 
 import { isConfigured } from './amplify-config';
-import {
-  deleteEntry,
-  listEntries,
-  saveEntry,
-  todayKey,
-  type Entry,
-  type Mood,
-} from './api';
+import { deleteEntry, listEntries, saveEntry, type Entry } from './api';
+import { MOODS, moodOf, type Mood } from './moods';
+import { formatDate, todayKey } from './date';
+import { Calendar } from './Calendar';
+import { Stats } from './Stats';
 import './App.css';
 
 I18n.putVocabularies(translations);
@@ -19,23 +16,16 @@ I18n.setLanguage('ko');
 
 const MAX_TEXT = 280;
 
-const MOODS: { value: Mood; emoji: string; label: string }[] = [
-  { value: 'good', emoji: '😊', label: '좋았다' },
-  { value: 'soso', emoji: '😐', label: '그럭저럭' },
-  { value: 'bad', emoji: '😞', label: '아쉬웠다' },
-];
+/** 서버가 허용하는 최대치. 1 년 치면 달력과 통계에 충분하다. */
+const FETCH_LIMIT = 365;
 
-function moodOf(mood: Mood | null) {
-  return MOODS.find((m) => m.value === mood);
-}
+const TABS = [
+  { id: 'list', label: '목록' },
+  { id: 'calendar', label: '달력' },
+  { id: 'stats', label: '통계' },
+] as const;
 
-/** 2026-08-31 -> 1996-08-31 시절 감성의 8월 31일 (월) */
-function formatDate(key: string) {
-  const [y, m, d] = key.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  const weekday = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
-  return `${m}월 ${d}일 (${weekday})`;
-}
+type TabId = (typeof TABS)[number]['id'];
 
 /** 제목 표시줄. X 버튼에만 동작이 걸려 있고 나머지는 장식이다. */
 function TitleBar({
@@ -102,9 +92,7 @@ function SetupNotice() {
               !
             </div>
             <div>
-              <p className="dialog-lead">
-                백엔드 설정이 연결되지 않았습니다.
-              </p>
+              <p className="dialog-lead">백엔드 설정이 연결되지 않았습니다.</p>
               <ol className="steps">
                 <li>
                   <code>cd infra &amp;&amp; npx cdk deploy</code> 로 백엔드를
@@ -136,8 +124,10 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
   const today = useMemo(() => todayKey(), []);
 
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [editing, setEditing] = useState(today);
   const [text, setText] = useState('');
   const [mood, setMood] = useState<Mood | null>(null);
+  const [tab, setTab] = useState<TabId>('list');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,7 +137,7 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
     setLoading(true);
     setError(null);
     try {
-      const { entries } = await listEntries();
+      const { entries } = await listEntries({ limit: FETCH_LIMIT });
       setEntries(entries);
 
       // 오늘 기록이 이미 있으면 편집 상태로 채워 둔다.
@@ -167,6 +157,19 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
     void load();
   }, [load]);
 
+  /** 달력이나 목록에서 고른 날짜를 입력 칸으로 가져온다. */
+  const pickDate = useCallback(
+    (date: string) => {
+      const found = entries.find((e) => e.date === date);
+      setEditing(date);
+      setText(found?.text ?? '');
+      setMood(found?.mood ?? null);
+      setError(null);
+      setSavedAt(null);
+    },
+    [entries],
+  );
+
   async function handleSave() {
     const trimmed = text.trim();
     if (!trimmed) {
@@ -177,8 +180,13 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
     setSaving(true);
     setError(null);
     try {
-      const { entry } = await saveEntry(today, trimmed, mood);
-      setEntries((prev) => [entry, ...prev.filter((e) => e.date !== today)]);
+      const { entry } = await saveEntry(editing, trimmed, mood);
+      // 날짜가 키라, 같은 날 기록은 갈아 끼운다. 목록은 최신 날짜가 먼저다.
+      setEntries((prev) =>
+        [entry, ...prev.filter((e) => e.date !== editing)].sort((a, b) =>
+          b.date.localeCompare(a.date),
+        ),
+      );
       setSavedAt(new Date().toLocaleTimeString('ko-KR'));
     } catch (e) {
       setError(e instanceof Error ? e.message : '저장하지 못했습니다.');
@@ -187,22 +195,25 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
     }
   }
 
-  async function handleDelete(date: string) {
-    setError(null);
-    try {
-      await deleteEntry(date);
-      setEntries((prev) => prev.filter((e) => e.date !== date));
-      if (date === today) {
-        setText('');
-        setMood(null);
-        setSavedAt(null);
+  const handleDelete = useCallback(
+    async (date: string) => {
+      setError(null);
+      try {
+        await deleteEntry(date);
+        setEntries((prev) => prev.filter((e) => e.date !== date));
+        if (date === editing) {
+          setText('');
+          setMood(null);
+          setSavedAt(null);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : '삭제하지 못했습니다.');
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '삭제하지 못했습니다.');
-    }
-  }
+    },
+    [editing],
+  );
 
-  const past = entries.filter((e) => e.date !== today);
+  const isToday = editing === today;
   const remaining = MAX_TEXT - text.length;
 
   return (
@@ -217,10 +228,15 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
 
         <div className="window-body">
           <fieldset className="group">
-            <legend>{formatDate(today)}</legend>
+            <legend>
+              {formatDate(editing)}
+              {isToday ? '' : ' — 지난 날 기록'}
+            </legend>
 
             <div className="field-row">
-              <span className="field-label">오늘 기분</span>
+              <span className="field-label">
+                {isToday ? '오늘 기분' : '그날 기분'}
+              </span>
               <div className="moods">
                 {MOODS.map((m) => (
                   <button
@@ -240,7 +256,11 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
-              placeholder="오늘 하루를 한 줄로 남겨보세요."
+              placeholder={
+                isToday
+                  ? '오늘 하루를 한 줄로 남겨보세요.'
+                  : '그날 하루를 한 줄로 남겨보세요.'
+              }
               rows={3}
             />
 
@@ -248,9 +268,16 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
               <span className={`counter ${remaining < 20 ? 'low' : ''}`}>
                 {remaining}자 남음
               </span>
-              <button className="btn" onClick={handleSave} disabled={saving}>
-                {saving ? '저장 중…' : '저장'}
-              </button>
+              <div className="action-buttons">
+                {!isToday && (
+                  <button className="btn" onClick={() => pickDate(today)}>
+                    오늘로
+                  </button>
+                )}
+                <button className="btn" onClick={handleSave} disabled={saving}>
+                  {saving ? '저장 중…' : '저장'}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -263,45 +290,49 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
             )}
           </fieldset>
 
-          <fieldset className="group">
-            <legend>지난 기록</legend>
+          {/* 속성 시트 탭. 지난 기록을 목록 / 달력 / 통계로 나눠 본다. */}
+          <div className="tabbed">
+            <div className="tabs" role="tablist">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  className={`tab ${tab === t.id ? 'selected' : ''}`}
+                  onClick={() => setTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
 
-            {loading && <p className="muted">불러오는 중…</p>}
+            <div className="tab-body" role="tabpanel">
+              {loading && <p className="muted">불러오는 중…</p>}
 
-            {!loading && past.length === 0 && (
-              <p className="muted">
-                아직 지난 기록이 없습니다. 오늘부터 시작해 보세요.
-              </p>
-            )}
+              {!loading && tab === 'list' && (
+                <EntryList
+                  entries={entries}
+                  editing={editing}
+                  onPick={pickDate}
+                  onDelete={handleDelete}
+                />
+              )}
 
-            {past.length > 0 && (
-              <ul className="entries">
-                {past.map((entry) => {
-                  const m = moodOf(entry.mood);
-                  return (
-                    <li key={entry.date} className="entry">
-                      <div className="entry-main">
-                        <div className="entry-meta">
-                          <span className="emoji" title={m?.label}>
-                            {m ? m.emoji : '·'}
-                          </span>
-                          <time>{formatDate(entry.date)}</time>
-                        </div>
-                        <p>{entry.text}</p>
-                      </div>
-                      <button
-                        className="btn small"
-                        onClick={() => handleDelete(entry.date)}
-                        aria-label={`${formatDate(entry.date)} 기록 삭제`}
-                      >
-                        삭제
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </fieldset>
+              {!loading && tab === 'calendar' && (
+                <Calendar
+                  entries={entries}
+                  today={today}
+                  selected={editing}
+                  onPick={pickDate}
+                />
+              )}
+
+              {!loading && tab === 'stats' && (
+                <Stats entries={entries} today={today} />
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="statusbar">
@@ -313,6 +344,62 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function EntryList({
+  entries,
+  editing,
+  onPick,
+  onDelete,
+}: {
+  entries: Entry[];
+  editing: string;
+  onPick: (date: string) => void;
+  onDelete: (date: string) => void;
+}) {
+  if (entries.length === 0) {
+    return <p className="muted">아직 기록이 없습니다. 오늘부터 시작해 보세요.</p>;
+  }
+
+  return (
+    <ul className="entries">
+      {entries.map((entry) => {
+        const m = moodOf(entry.mood);
+        return (
+          <li
+            key={entry.date}
+            className={`entry ${entry.date === editing ? 'current' : ''}`}
+          >
+            <div className="entry-main">
+              <div className="entry-meta">
+                <span className="emoji" title={m?.label}>
+                  {m ? m.emoji : '·'}
+                </span>
+                <time>{formatDate(entry.date)}</time>
+              </div>
+              <p>{entry.text}</p>
+            </div>
+            <div className="entry-buttons">
+              <button
+                className="btn small"
+                onClick={() => onPick(entry.date)}
+                aria-label={`${formatDate(entry.date)} 기록 수정`}
+              >
+                수정
+              </button>
+              <button
+                className="btn small"
+                onClick={() => onDelete(entry.date)}
+                aria-label={`${formatDate(entry.date)} 기록 삭제`}
+              >
+                삭제
+              </button>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

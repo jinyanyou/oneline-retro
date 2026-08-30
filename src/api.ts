@@ -1,7 +1,6 @@
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { API_URL } from './amplify-config';
-
-export type Mood = 'good' | 'soso' | 'bad';
+import type { Mood } from './moods';
 
 export interface Entry {
   date: string;
@@ -39,8 +38,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
-export function listEntries(): Promise<{ entries: Entry[] }> {
-  return request('/entries');
+/** 기간은 from 과 to 를 함께 줘야 적용된다. limit 은 서버에서 365 로 잘린다. */
+export function listEntries(
+  params: { from?: string; to?: string; limit?: number } = {},
+): Promise<{ entries: Entry[] }> {
+  const query = new URLSearchParams();
+  if (params.from) query.set('from', params.from);
+  if (params.to) query.set('to', params.to);
+  if (params.limit) query.set('limit', String(params.limit));
+
+  const qs = query.toString();
+  return request(`/entries${qs ? `?${qs}` : ''}`);
 }
 
 export function saveEntry(
@@ -56,10 +64,4 @@ export function saveEntry(
 
 export function deleteEntry(date: string): Promise<void> {
   return request(`/entries/${date}`, { method: 'DELETE' });
-}
-
-/** 로컬 시간대 기준 YYYY-MM-DD. toISOString() 은 UTC 라 날짜가 밀린다. */
-export function todayKey(d = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }

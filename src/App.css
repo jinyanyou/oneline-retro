@@ -252,6 +252,11 @@ textarea:focus {
   font-weight: 700;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 6px;
+}
+
 /* ---------- 버튼 ---------- */
 .btn {
   min-width: 75px;
@@ -353,8 +358,17 @@ textarea:focus {
   overflow-wrap: anywhere;
 }
 
-.entry .btn {
+.entry-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   flex-shrink: 0;
+}
+
+/* 지금 위쪽 입력 칸에 올라와 있는 날짜를 목록에서도 알아보게 한다 */
+.entry.current {
+  background: #efefef;
+  box-shadow: inset 2px 0 var(--title-a);
 }
 
 /* ---------- 대화 상자 ---------- */
@@ -533,4 +547,208 @@ textarea:focus-visible {
   * {
     transition: none !important;
   }
+}
+
+/* ---------- 탭 (속성 시트) ----------
+   선택된 탭만 1px 올라와 아래 판과 이어 붙은 것처럼 보이게 한다. */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding-left: 3px;
+  position: relative;
+  z-index: 1;
+}
+
+.tab {
+  padding: 3px 14px 4px;
+  margin-top: 2px;
+  border: none;
+  background: var(--face);
+  box-shadow: inset 1px 1px var(--light), inset 2px 0 var(--highlight),
+    inset -1px 0 var(--dark), inset -2px 0 var(--shadow);
+  color: var(--dark);
+  font-family: var(--font);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tab.selected {
+  margin-top: 0;
+  padding: 4px 16px 6px;
+  font-weight: 700;
+}
+
+.tab-body {
+  margin-top: -1px;
+  padding: 12px 10px;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+/* ---------- 달력 ---------- */
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.cal-title {
+  flex: 1;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 3px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+
+.cal-weekday {
+  padding: 2px 0 3px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3a3a3a;
+}
+
+.cal-cell {
+  aspect-ratio: 1 / 0.8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--dark);
+  font-family: var(--font);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.cal-cell.blank {
+  visibility: hidden;
+}
+
+/* 기록이 있는 날만 튀어나온 면으로 눈에 띄게 한다 */
+.cal-cell.has {
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+.cal-cell.selected {
+  box-shadow: var(--pressed);
+  background-color: var(--face);
+  background-image: radial-gradient(var(--light) 0.5px, transparent 0.5px);
+  background-size: 2px 2px;
+}
+
+.cal-cell:disabled {
+  color: #b0b0b0;
+  cursor: default;
+}
+
+.cal-cell.sun,
+.cal-weekday.sun {
+  color: #a80000;
+}
+
+.cal-cell.sat,
+.cal-weekday.sat {
+  color: #000080;
+}
+
+.cal-cell.today .cal-day {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.cal-day {
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-mark {
+  font-size: 13px;
+  line-height: 1;
+  min-height: 13px;
+}
+
+.cal-hint {
+  margin-top: 8px;
+}
+
+/* ---------- 통계 ---------- */
+.tiles {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tile {
+  flex: 1;
+  padding: 6px 4px 7px;
+  background: var(--face);
+  box-shadow: var(--raised);
+  text-align: center;
+  font-size: 11px;
+  color: #3a3a3a;
+}
+
+.tile b {
+  display: block;
+  margin-bottom: 1px;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--title-a);
+  font-variant-numeric: tabular-nums;
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 5px 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.bar-row {
+  display: contents;
+}
+
+.bar-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.bar-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 95년식 진행 막대. 채운 부분을 블록으로 끊어 그린다. */
+.bar {
+  height: 16px;
+  padding: 2px;
+  background: var(--field);
+  box-shadow: var(--sunken-thin);
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--title-a) 0 8px,
+    transparent 8px 10px
+  );
 }
