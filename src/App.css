@@ -238,10 +238,6 @@ textarea:focus {
   outline: none;
 }
 
-input {
-  font-size: 13px;
-}
-
 .actions {
   display: flex;
   align-items: center;

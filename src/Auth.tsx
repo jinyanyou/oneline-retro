@@ -8,6 +8,8 @@ import {
   signUp,
 } from 'aws-amplify/auth';
 
+import { Hub } from 'aws-amplify/utils';
+
 import { TitleBar } from './TitleBar';
 
 /**
@@ -78,6 +80,23 @@ export function Auth({
     void refresh();
   }, [refresh]);
 
+  /**
+   * 리프레시 토큰이 만료되면 이후 모든 API 호출이 실패한다. 그때 화면에
+   * 에러만 띄우고 머무르면 빠져나갈 방법이 없으므로 로그인 화면으로 돌린다.
+   */
+  useEffect(
+    () =>
+      Hub.listen('auth', ({ payload }) => {
+        if (
+          payload.event === 'signedOut' ||
+          payload.event === 'tokenRefresh_failure'
+        ) {
+          setEmail(null);
+        }
+      }),
+    [],
+  );
+
   function set(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
@@ -99,11 +118,13 @@ export function Auth({
       return;
     }
 
-    // 가입만 하고 코드를 못 넣은 계정. 코드를 다시 보내고 확인 단계로 보낸다.
+    // 가입만 하고 코드를 못 넣은 계정. 메일은 자동으로 다시 보내지 않는다.
+    // Cognito 기본 발송은 하루 50통이라 본인이 필요할 때만 쓰게 한다.
     if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
-      await resendSignUpCode({ username: form.email.trim() });
       setMode('confirm');
-      setNotice('인증 코드를 다시 보냈습니다. 메일함을 확인해 주세요.');
+      setNotice(
+        '이메일 인증이 아직 끝나지 않았습니다. 받아 둔 코드를 넣거나, 코드 다시 받기를 누르세요.',
+      );
       return;
     }
 
@@ -233,6 +254,7 @@ export function Auth({
               <label className="form-row">
                 <span>인증 코드</span>
                 <input
+                  type="text"
                   value={form.code}
                   onChange={(e) => set('code', e.target.value)}
                   inputMode="numeric"
