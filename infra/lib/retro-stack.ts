@@ -43,7 +43,22 @@ export class RetroStack extends Stack {
     // ---------------------------------------------------------------
     // 인증: 이메일로 가입/로그인하는 사용자 풀
     // ---------------------------------------------------------------
+    // 인증 메일 발송 경로. 기본값인 Cognito 발신자는 도메인 평판이 없어
+    // 스팸함으로 자주 걸리고 하루 50통 한도가 있다. SES 에서 인증한 주소를
+    // 넘기면 그쪽으로 보낸다.
+    //   npx cdk deploy -c sesFrom=no-reply@example.com
+    const sesFrom = this.node.tryGetContext('sesFrom');
+    const email =
+      typeof sesFrom === 'string' && sesFrom.trim()
+        ? cognito.UserPoolEmail.withSES({
+            fromEmail: sesFrom.trim(),
+            fromName: '한마디',
+            sesRegion: this.node.tryGetContext('sesRegion') || this.region,
+          })
+        : cognito.UserPoolEmail.withCognito();
+
     const userPool = new cognito.UserPool(this, 'UserPool', {
+      email,
       selfSignUpEnabled: true,
       signInAliases: { email: true },
       autoVerify: { email: true },
@@ -152,5 +167,8 @@ export class RetroStack extends Stack {
 
     // 프론트엔드를 배포한 뒤 이 값이 맞는지 꼭 확인한다.
     new CfnOutput(this, 'AllowedOrigins', { value: allowOrigins.join(', ') });
+    new CfnOutput(this, 'EmailSender', {
+      value: typeof sesFrom === 'string' && sesFrom.trim() ? sesFrom.trim() : 'Cognito 기본 발신자 (하루 50통)',
+    });
   }
 }
