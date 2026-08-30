@@ -29,7 +29,7 @@ function moodOf(mood: Mood | null) {
   return MOODS.find((m) => m.value === mood);
 }
 
-/** 2026-08-31 -> 8월 31일 (월) */
+/** 2026-08-31 -> 1996-08-31 시절 감성의 8월 31일 (월) */
 function formatDate(key: string) {
   const [y, m, d] = key.split('-').map(Number);
   const date = new Date(y, m - 1, d);
@@ -37,25 +37,97 @@ function formatDate(key: string) {
   return `${m}월 ${d}일 (${weekday})`;
 }
 
+/** 제목 표시줄. X 버튼에만 동작이 걸려 있고 나머지는 장식이다. */
+function TitleBar({
+  title,
+  onClose,
+  closeLabel,
+}: {
+  title: string;
+  onClose?: () => void;
+  closeLabel?: string;
+}) {
+  return (
+    <div className="titlebar">
+      <span className="titlebar-text">{title}</span>
+      <div className="titlebar-buttons">
+        <span className="tb-btn" aria-hidden="true">
+          <i className="glyph-min" />
+        </span>
+        <span className="tb-btn" aria-hidden="true">
+          <i className="glyph-max" />
+        </span>
+        {onClose ? (
+          <button className="tb-btn" onClick={onClose} title={closeLabel}>
+            <i className="glyph-close" />
+            <span className="sr-only">{closeLabel}</span>
+          </button>
+        ) : (
+          <span className="tb-btn" aria-hidden="true">
+            <i className="glyph-close" />
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MenuBar() {
+  return (
+    <div className="menubar" aria-hidden="true">
+      <span>
+        <u>파</u>일
+      </span>
+      <span>
+        <u>편</u>집
+      </span>
+      <span>
+        <u>보</u>기
+      </span>
+      <span>
+        <u>도</u>움말
+      </span>
+    </div>
+  );
+}
+
 function SetupNotice() {
   return (
-    <div className="setup">
-      <h1>한 줄 회고</h1>
-      <div className="stripes" aria-hidden="true" />
-      <p>아직 백엔드 설정이 연결되지 않았습니다.</p>
-      <ol>
-        <li>
-          <code>cd infra &amp;&amp; npx cdk deploy</code> 로 백엔드를 배포합니다.
-        </li>
-        <li>
-          출력된 <code>UserPoolId</code>, <code>UserPoolClientId</code>,{' '}
-          <code>ApiUrl</code> 값을 확인합니다.
-        </li>
-        <li>
-          <code>.env.example</code> 을 <code>.env</code> 로 복사해 값을 채웁니다.
-        </li>
-        <li>개발 서버를 다시 시작합니다.</li>
-      </ol>
+    <div className="desktop">
+      <div className="window setup">
+        <TitleBar title="한 줄 회고 - 설정 필요" />
+        <div className="window-body">
+          <div className="dialog">
+            <div className="dialog-icon" aria-hidden="true">
+              !
+            </div>
+            <div>
+              <p className="dialog-lead">
+                백엔드 설정이 연결되지 않았습니다.
+              </p>
+              <ol className="steps">
+                <li>
+                  <code>cd infra &amp;&amp; npx cdk deploy</code> 로 백엔드를
+                  배포합니다.
+                </li>
+                <li>
+                  출력된 <code>UserPoolId</code>, <code>UserPoolClientId</code>,{' '}
+                  <code>ApiUrl</code> 값을 확인합니다.
+                </li>
+                <li>
+                  <code>.env.example</code> 을 <code>.env</code> 로 복사해 값을
+                  채웁니다.
+                </li>
+                <li>개발 서버를 다시 시작합니다.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div className="statusbar">
+          <span className="status-panel">준비되지 않음</span>
+          <span className="status-panel grow" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -134,96 +206,112 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
   const remaining = MAX_TEXT - text.length;
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>한 줄 회고</h1>
-        <div className="account">
-          <span className="email">{email}</span>
-          <button className="link" onClick={signOut}>
-            로그아웃
-          </button>
-        </div>
-      </header>
-
-      <div className="stripes" aria-hidden="true" />
-
-      <section className="today">
-        <div className="today-head">
-          <h2>{formatDate(today)}</h2>
-          {savedAt && <span className="saved">{savedAt} 저장됨</span>}
-        </div>
-
-        <div className="moods">
-          {MOODS.map((m) => (
-            <button
-              key={m.value}
-              type="button"
-              className={`mood ${mood === m.value ? 'selected' : ''}`}
-              onClick={() => setMood(mood === m.value ? null : m.value)}
-              aria-pressed={mood === m.value}
-            >
-              <span className="emoji">{m.emoji}</span>
-              {m.label}
-            </button>
-          ))}
-        </div>
-
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
-          placeholder="오늘 하루를 한 줄로 남겨보세요."
-          rows={3}
+    <div className="desktop">
+      <div className="window app">
+        <TitleBar
+          title={`한 줄 회고 - ${email || '사용자'}`}
+          onClose={signOut}
+          closeLabel="로그아웃"
         />
+        <MenuBar />
 
-        <div className="actions">
-          <span className={`counter ${remaining < 20 ? 'low' : ''}`}>
-            {remaining}자 남음
-          </span>
-          <button className="primary" onClick={handleSave} disabled={saving}>
-            {saving ? '저장 중…' : '저장'}
-          </button>
+        <div className="window-body">
+          <fieldset className="group">
+            <legend>{formatDate(today)}</legend>
+
+            <div className="field-row">
+              <span className="field-label">오늘 기분</span>
+              <div className="moods">
+                {MOODS.map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    className={`btn mood ${mood === m.value ? 'selected' : ''}`}
+                    onClick={() => setMood(mood === m.value ? null : m.value)}
+                    aria-pressed={mood === m.value}
+                  >
+                    <span className="emoji">{m.emoji}</span>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
+              placeholder="오늘 하루를 한 줄로 남겨보세요."
+              rows={3}
+            />
+
+            <div className="actions">
+              <span className={`counter ${remaining < 20 ? 'low' : ''}`}>
+                {remaining}자 남음
+              </span>
+              <button className="btn" onClick={handleSave} disabled={saving}>
+                {saving ? '저장 중…' : '저장'}
+              </button>
+            </div>
+
+            {error && (
+              <div className="dialog error" role="alert">
+                <div className="dialog-icon stop" aria-hidden="true">
+                  ×
+                </div>
+                <p>{error}</p>
+              </div>
+            )}
+          </fieldset>
+
+          <fieldset className="group">
+            <legend>지난 기록</legend>
+
+            {loading && <p className="muted">불러오는 중…</p>}
+
+            {!loading && past.length === 0 && (
+              <p className="muted">
+                아직 지난 기록이 없습니다. 오늘부터 시작해 보세요.
+              </p>
+            )}
+
+            {past.length > 0 && (
+              <ul className="entries">
+                {past.map((entry) => {
+                  const m = moodOf(entry.mood);
+                  return (
+                    <li key={entry.date} className="entry">
+                      <div className="entry-main">
+                        <div className="entry-meta">
+                          <span className="emoji" title={m?.label}>
+                            {m ? m.emoji : '·'}
+                          </span>
+                          <time>{formatDate(entry.date)}</time>
+                        </div>
+                        <p>{entry.text}</p>
+                      </div>
+                      <button
+                        className="btn small"
+                        onClick={() => handleDelete(entry.date)}
+                        aria-label={`${formatDate(entry.date)} 기록 삭제`}
+                      >
+                        삭제
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </fieldset>
         </div>
 
-        {error && <p className="error">{error}</p>}
-      </section>
-
-      <section className="past">
-        <h2>지난 기록 {past.length > 0 && <span>({past.length})</span>}</h2>
-
-        {loading && <p className="muted">불러오는 중…</p>}
-
-        {!loading && past.length === 0 && (
-          <p className="muted">아직 지난 기록이 없습니다. 오늘부터 시작해 보세요.</p>
-        )}
-
-        <ul className="entries">
-          {past.map((entry) => {
-            const m = moodOf(entry.mood);
-            return (
-              <li key={entry.date} className="entry">
-                <div className="entry-main">
-                  <div className="entry-meta">
-                    {m && (
-                      <span className="emoji" title={m.label}>
-                        {m.emoji}
-                      </span>
-                    )}
-                    <time>{formatDate(entry.date)}</time>
-                  </div>
-                  <p>{entry.text}</p>
-                </div>
-                <button
-                  className="link danger"
-                  onClick={() => handleDelete(entry.date)}
-                  aria-label={`${formatDate(entry.date)} 기록 삭제`}
-                >
-                  삭제
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+        <div className="statusbar">
+          <span className="status-panel">기록 {entries.length}개</span>
+          <span className="status-panel grow">
+            {savedAt ? `${savedAt} 저장됨` : '준비'}
+          </span>
+          <span className="status-panel">{today}</span>
+        </div>
+      </div>
     </div>
   );
 }
