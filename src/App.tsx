@@ -6,6 +6,7 @@ import { MOODS, moodOf, type Mood } from './moods';
 import { formatDate, todayKey } from './date';
 import { Auth } from './Auth';
 import { Calendar } from './Calendar';
+import { ConfirmDialog } from './ConfirmDialog';
 import { Stats } from './Stats';
 import { TitleBar } from './TitleBar';
 import './App.css';
@@ -89,6 +90,8 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
   const [text, setText] = useState('');
   const [mood, setMood] = useState<Mood | null>(null);
   const [tab, setTab] = useState<TabId>('list');
+  // 삭제를 기다리는 날짜. 확인 대화 상자를 띄우는 조건이기도 하다.
+  const [pending, setPending] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +161,7 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
 
   const handleDelete = useCallback(
     async (date: string) => {
+      setPending(null);
       setError(null);
       try {
         await deleteEntry(date);
@@ -276,7 +280,7 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
                   entries={entries}
                   editing={editing}
                   onPick={pickDate}
-                  onDelete={handleDelete}
+                  onDelete={setPending}
                 />
               )}
 
@@ -304,6 +308,15 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
           <span className="status-panel">{today}</span>
         </div>
       </div>
+
+      {pending && (
+        <ConfirmDialog
+          title="기록 삭제"
+          message={`${formatDate(pending)} 기록을 삭제할까요? 되돌릴 수 없습니다.`}
+          onConfirm={() => void handleDelete(pending)}
+          onCancel={() => setPending(null)}
+        />
+      )}
     </div>
   );
 }

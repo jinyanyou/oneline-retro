@@ -707,3 +707,30 @@ textarea:focus-visible {
 .form-help {
   margin-bottom: 10px;
 }
+
+/* ---------- 확인 대화 상자 ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.window.confirm {
+  max-width: 23rem;
+  margin: 0;
+}
+
+.window.confirm .window-body {
+  gap: 4px;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 0 6px;
+}
