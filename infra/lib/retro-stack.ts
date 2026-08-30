@@ -16,7 +16,7 @@ import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import * as path from 'node:path';
 
 /**
- * 한 줄 회고 기록장 - 전체 백엔드.
+ * 한마디 기록장 - 전체 백엔드.
  *
  * 학습용 프로젝트라 스택을 하나로 합쳤다. 리소스가 늘어나면
  * Data / Auth / Api 로 쪼개는 편이 낫다.

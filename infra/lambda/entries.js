@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * 한 줄 회고 엔트리 API.
+ * 한마디 엔트리 API.
  *
  * 번들러를 쓰지 않으므로 Lambda 런타임에 기본 포함된 것만 사용한다.
  * @aws-sdk/client-dynamodb 는 Node 20 런타임에 들어 있다.

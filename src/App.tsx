@@ -85,7 +85,7 @@ function SetupNotice() {
   return (
     <div className="desktop">
       <div className="window setup">
-        <TitleBar title="한 줄 회고 - 설정 필요" />
+        <TitleBar title="한마디 - 설정 필요" />
         <div className="window-body">
           <div className="dialog">
             <div className="dialog-icon" aria-hidden="true">
@@ -220,7 +220,7 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
     <div className="desktop">
       <div className="window app">
         <TitleBar
-          title={`한 줄 회고 - ${email || '사용자'}`}
+          title={`한마디 - ${email || '사용자'}`}
           onClose={signOut}
           closeLabel="로그아웃"
         />
@@ -258,8 +258,8 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
               onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
               placeholder={
                 isToday
-                  ? '오늘 하루를 한 줄로 남겨보세요.'
-                  : '그날 하루를 한 줄로 남겨보세요.'
+                  ? '오늘 하루를 한마디로 남겨보세요.'
+                  : '그날 하루를 한마디로 남겨보세요.'
               }
               rows={3}
             />
