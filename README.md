@@ -109,8 +109,19 @@ npm run dev
 
 ### 배포 후 조여야 할 것
 
-`infra/lib/retro-stack.ts` 의 CORS `allowOrigins` 가 지금은 `['*']` 이다.
-Amplify 도메인이 정해지면 그 주소로 좁히고 다시 `cdk deploy` 할 것.
+CORS 로 허용하는 출처는 배포할 때 정한다. 아무것도 넘기지 않으면
+로컬 개발 서버(`http://localhost:5173`)만 허용한다.
+
+Amplify 도메인이 정해지면 그 주소를 넣어 다시 배포한다. 쉼표로 여러 개를 준다.
+
+```bash
+cd infra
+npx cdk deploy -c origins=https://main.xxxxx.amplifyapp.com,http://localhost:5173
+```
+
+넘긴 목록이 기존 설정을 통째로 대체하므로, 로컬 개발을 계속할 거면
+`http://localhost:5173` 도 함께 적어야 한다. 실제 적용된 값은 배포 출력의
+`AllowedOrigins` 에서 확인할 수 있다.
 
 ## 정리
 

@@ -104,10 +104,18 @@ export class RetroStack extends Stack {
       { jwtAudience: [userPoolClient.userPoolClientId] },
     );
 
+    // 브라우저에서 이 API 를 부를 수 있는 출처. 기본값은 로컬 개발 서버뿐이다.
+    // 배포한 프론트엔드 주소는 배포할 때 넘긴다. 쉼표로 여러 개도 된다.
+    //   npx cdk deploy -c origins=https://main.xxxx.amplifyapp.com
+    const origins = this.node.tryGetContext('origins');
+    const allowOrigins =
+      typeof origins === 'string' && origins.trim()
+        ? origins.split(',').map((o) => o.trim()).filter(Boolean)
+        : ['http://localhost:5173'];
+
     const api = new HttpApi(this, 'HttpApi', {
       corsPreflight: {
-        // 배포 후 Amplify 도메인으로 좁히는 것을 권장한다.
-        allowOrigins: ['*'],
+        allowOrigins,
         allowMethods: [
           CorsHttpMethod.GET,
           CorsHttpMethod.PUT,
@@ -141,5 +149,8 @@ export class RetroStack extends Stack {
     new CfnOutput(this, 'UserPoolId', { value: userPool.userPoolId });
     new CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });
     new CfnOutput(this, 'Region', { value: this.region });
+
+    // 프론트엔드를 배포한 뒤 이 값이 맞는지 꼭 확인한다.
+    new CfnOutput(this, 'AllowedOrigins', { value: allowOrigins.join(', ') });
   }
 }
