@@ -222,6 +222,18 @@ export function Auth({
         <TitleBar title="한마디 - 로그인" />
 
         <div className="window-body">
+          <div className="brand">
+            <div className="brand-icon" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </div>
+            <div>
+              <b>한마디</b>
+              <span>하루를 한마디로 기록하는 회고 노트</span>
+            </div>
+          </div>
+
           {mode === 'confirm' ? (
             <p className="muted">
               메일로 받은 6자리 코드를 넣으면 가입이 끝납니다.
@@ -309,40 +321,41 @@ export function Auth({
               </div>
             )}
 
-            <div className="actions">
-              {mode === 'confirm' ? (
+            <button className="btn primary" type="submit" disabled={busy}>
+              {busy ? '잠시만…' : submitLabel}
+            </button>
+
+            {mode === 'confirm' && (
+              <div className="form-links">
                 <button
                   type="button"
-                  className="btn small"
+                  className="linklike"
                   onClick={() => void handleResend()}
                   disabled={busy}
                 >
                   코드 다시 받기
                 </button>
-              ) : (
-                <span />
-              )}
-
-              <div className="action-buttons">
-                {mode === 'confirm' && (
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => switchMode('signIn')}
-                    disabled={busy}
-                  >
-                    취소
-                  </button>
-                )}
-                <button className="btn" type="submit" disabled={busy}>
-                  {busy ? '잠시만…' : submitLabel}
+                <button
+                  type="button"
+                  className="linklike"
+                  onClick={() => switchMode('signIn')}
+                  disabled={busy}
+                >
+                  취소
                 </button>
               </div>
-            </div>
+            )}
           </form>
         </div>
 
         <div className="statusbar">
+          <span className="status-panel">
+            {mode === 'signIn'
+              ? '로그인'
+              : mode === 'signUp'
+                ? '새 계정'
+                : '이메일 인증'}
+          </span>
           <span className="status-panel grow">
             {busy ? '서버와 통신 중…' : '준비'}
           </span>

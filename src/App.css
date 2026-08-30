@@ -217,7 +217,7 @@ input[type='password'],
 input[type='text'],
 textarea {
   width: 100%;
-  padding: 4px 5px;
+  padding: 5px 6px;
   border: none;
   background: var(--field);
   box-shadow: var(--sunken);
@@ -690,22 +690,115 @@ textarea:focus-visible {
 
 /* ---------- 로그인 창 ---------- */
 .window.auth {
-  max-width: 24rem;
+  max-width: 26rem;
+}
+
+.window.auth .window-body {
+  padding: 10px 9px 6px;
+}
+
+.window.auth .tab-body {
+  padding: 14px 14px 12px;
+}
+
+/* 제목 표시줄에만 이름이 있으면 창이 허전하다. 안쪽에도 세운다. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+
+.brand b {
+  display: block;
+  font-size: 20px;
+  line-height: 1.25;
+  color: var(--title-a);
+}
+
+.brand span {
+  font-size: 12px;
+  color: #3a3a3a;
+}
+
+/* 줄이 그어진 메모지. 도형 몇 개로 그린다. */
+.brand-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 5px;
+  border: 1px solid var(--dark);
+  background: var(--light);
+  box-shadow: 2px 2px 0 var(--shadow);
+}
+
+.brand-icon i {
+  display: block;
+  height: 2px;
+  background: var(--title-a);
+}
+
+.brand-icon i:last-child {
+  width: 55%;
 }
 
 .form-row {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .form-row span {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   font-size: 12px;
 }
 
 .form-help {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+/* 로그인 화면의 주 동작은 폭을 꽉 채운다 */
+.btn.primary {
+  width: 100%;
+  min-height: 27px;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.btn.primary:active:not(:disabled) {
+  padding: 4px 11px 2px 13px;
+}
+
+/* 보조 동작은 버튼 대신 그 시절 하이퍼링크로 */
+.form-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.linklike {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--link);
+  font-family: var(--font);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linklike:disabled {
+  color: var(--shadow);
+  cursor: default;
 }
 
 /* ---------- 확인 대화 상자 ---------- */
