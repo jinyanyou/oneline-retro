@@ -24,19 +24,60 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-function MenuBar() {
+/**
+ * 메뉴 막대. 파일 메뉴만 실제로 열리고 나머지는 장식이다.
+ * 로그아웃이 제목 표시줄 X 버튼에만 있어서 아무도 못 찾았다.
+ */
+function MenuBar({ onSignOut }: { onSignOut: () => void }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    // 바깥을 누르거나 Esc 를 누르면 닫는다. 그 시절 메뉴가 그랬다.
+    const close = () => setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('click', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', close);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="menubar" aria-hidden="true">
-      <span>
-        <u>파</u>일
-      </span>
-      <span>
+    <div className="menubar">
+      <div className="menu">
+        <button
+          className={`menu-title ${open ? 'open' : ''}`}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+        >
+          <u>파</u>일
+        </button>
+
+        {open && (
+          <div className="menu-list" role="menu">
+            <button className="menu-item" role="menuitem" onClick={onSignOut}>
+              로그아웃
+            </button>
+          </div>
+        )}
+      </div>
+
+      <span className="menu-title dim" aria-hidden="true">
         <u>편</u>집
       </span>
-      <span>
+      <span className="menu-title dim" aria-hidden="true">
         <u>보</u>기
       </span>
-      <span>
+      <span className="menu-title dim" aria-hidden="true">
         <u>도</u>움말
       </span>
     </div>
@@ -189,7 +230,7 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
           onClose={signOut}
           closeLabel="로그아웃"
         />
-        <MenuBar />
+        <MenuBar onSignOut={signOut} />
 
         <div className="window-body">
           <fieldset className="group">

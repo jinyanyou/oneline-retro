@@ -164,8 +164,61 @@ button.tb-btn:active {
   font-size: 12px;
 }
 
-.menubar span {
+.menu {
+  position: relative;
+}
+
+.menu-title {
+  display: inline-block;
   padding: 2px 7px;
+  border: none;
+  background: none;
+  color: var(--dark);
+  font-family: var(--font);
+  font-size: 12px;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.menu-title.dim {
+  cursor: default;
+}
+
+/* 열린 메뉴 제목은 선택 색으로 반전된다 */
+.menu-title.open {
+  background: var(--title-a);
+  color: var(--title-text);
+}
+
+.menu-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  min-width: 9rem;
+  padding: 2px;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 3px 24px 3px 10px;
+  border: none;
+  background: none;
+  color: var(--dark);
+  font-family: var(--font);
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--title-a);
+  color: var(--title-text);
 }
 
 .menubar u {
