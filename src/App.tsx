@@ -41,6 +41,7 @@ function SetupNotice() {
   return (
     <div className="setup">
       <h1>한 줄 회고</h1>
+      <div className="stripes" aria-hidden="true" />
       <p>아직 백엔드 설정이 연결되지 않았습니다.</p>
       <ol>
         <li>
@@ -143,6 +144,8 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
           </button>
         </div>
       </header>
+
+      <div className="stripes" aria-hidden="true" />
 
       <section className="today">
         <div className="today-head">
