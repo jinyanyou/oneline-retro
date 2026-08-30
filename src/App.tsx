@@ -1,18 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Authenticator, translations } from '@aws-amplify/ui-react';
-import { I18n } from 'aws-amplify/utils';
-import '@aws-amplify/ui-react/styles.css';
 
 import { isConfigured } from './amplify-config';
 import { deleteEntry, listEntries, saveEntry, type Entry } from './api';
 import { MOODS, moodOf, type Mood } from './moods';
 import { formatDate, todayKey } from './date';
+import { Auth } from './Auth';
 import { Calendar } from './Calendar';
 import { Stats } from './Stats';
+import { TitleBar } from './TitleBar';
 import './App.css';
-
-I18n.putVocabularies(translations);
-I18n.setLanguage('ko');
 
 const MAX_TEXT = 280;
 
@@ -26,41 +22,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
-
-/** 제목 표시줄. X 버튼에만 동작이 걸려 있고 나머지는 장식이다. */
-function TitleBar({
-  title,
-  onClose,
-  closeLabel,
-}: {
-  title: string;
-  onClose?: () => void;
-  closeLabel?: string;
-}) {
-  return (
-    <div className="titlebar">
-      <span className="titlebar-text">{title}</span>
-      <div className="titlebar-buttons">
-        <span className="tb-btn" aria-hidden="true">
-          <i className="glyph-min" />
-        </span>
-        <span className="tb-btn" aria-hidden="true">
-          <i className="glyph-max" />
-        </span>
-        {onClose ? (
-          <button className="tb-btn" onClick={onClose} title={closeLabel}>
-            <i className="glyph-close" />
-            <span className="sr-only">{closeLabel}</span>
-          </button>
-        ) : (
-          <span className="tb-btn" aria-hidden="true">
-            <i className="glyph-close" />
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function MenuBar() {
   return (
@@ -407,13 +368,8 @@ export default function App() {
   if (!isConfigured) return <SetupNotice />;
 
   return (
-    <Authenticator signUpAttributes={['email']}>
-      {({ signOut, user }) => (
-        <Journal
-          email={user?.signInDetails?.loginId ?? ''}
-          signOut={() => signOut?.()}
-        />
-      )}
-    </Authenticator>
+    <Auth>
+      {({ email, signOut }) => <Journal email={email} signOut={signOut} />}
+    </Auth>
   );
 }

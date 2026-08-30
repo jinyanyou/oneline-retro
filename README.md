@@ -29,6 +29,8 @@ AWS 계정: `514090179227` / 리전: `ap-northeast-2` (서울)
 .
 ├── src/                  프론트엔드
 │   ├── App.tsx           창 전체 + 입력 칸 + 탭
+│   ├── Auth.tsx          로그인 / 회원가입 / 코드 확인
+│   ├── TitleBar.tsx      창 제목 표시줄
 │   ├── Calendar.tsx      달력 탭
 │   ├── Stats.tsx         통계 탭
 │   ├── date.ts           날짜 키 다루기
@@ -149,7 +151,9 @@ DynamoDB 테이블과 User Pool 은 `RemovalPolicy.DESTROY` 라 함께 삭제된
 
 ## 알려진 사항
 
-- 번들 크기가 약 780KB(gzip 214KB)다. 대부분 `@aws-amplify/ui-react` 로그인 UI 다.
-  줄이려면 로그인 화면을 직접 만들고 `aws-amplify/auth` 만 쓰면 된다.
+- 로그인 화면은 `@aws-amplify/ui-react` 대신 `aws-amplify/auth` 를 직접 불러
+  만들었다. 그 패키지를 쓰던 시절 번들이 1.1MB(gzip 246KB)였는데 지금은
+  341KB(gzip 103KB)다. 스타일시트만 320KB 였고, 대부분은 90년대 풍으로
+  덮어쓰느라 버려지던 규칙이었다.
 - 앱은 최근 365일치를 한 번에 받아 달력과 통계를 그린다. 그보다 오래된 기록은
   `GET /entries?from=&to=` 로 따로 가져와야 한다.

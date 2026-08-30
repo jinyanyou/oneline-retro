@@ -212,6 +212,9 @@ button.tb-btn:active {
   flex-wrap: wrap;
 }
 
+input[type='email'],
+input[type='password'],
+input[type='text'],
 textarea {
   width: 100%;
   padding: 4px 5px;
@@ -225,12 +228,18 @@ textarea {
   resize: vertical;
 }
 
+input::placeholder,
 textarea::placeholder {
   color: var(--shadow);
 }
 
+input:focus,
 textarea:focus {
   outline: none;
+}
+
+input {
+  font-size: 13px;
 }
 
 .actions {
@@ -473,76 +482,6 @@ textarea:focus-visible {
   outline-offset: -3px;
 }
 
-/* ---------- 로그인 화면 (Amplify UI) ---------- */
-[data-amplify-authenticator] {
-  --amplify-fonts-default-variable: var(--font);
-  --amplify-fonts-default-static: var(--font);
-
-  --amplify-colors-background-primary: var(--face);
-  --amplify-colors-background-secondary: var(--face);
-  --amplify-colors-font-primary: var(--dark);
-  --amplify-colors-font-interactive: var(--link);
-  --amplify-colors-border-primary: var(--shadow);
-
-  --amplify-colors-brand-primary-10: var(--face);
-  --amplify-colors-brand-primary-80: var(--title-a);
-  --amplify-colors-brand-primary-90: var(--title-a);
-  --amplify-colors-brand-primary-100: var(--title-a);
-
-  --amplify-components-tabs-item-active-color: var(--dark);
-  --amplify-components-tabs-item-active-border-color: var(--title-a);
-  --amplify-components-tabs-item-color: #3a3a3a;
-
-  --amplify-radii-small: 0;
-  --amplify-radii-medium: 0;
-  --amplify-radii-large: 0;
-
-  padding: 3rem 1rem;
-}
-
-/* 로그인 카드를 창처럼 보이게 한다 */
-[data-amplify-authenticator] [data-amplify-router] {
-  border: none;
-  background: var(--face);
-  box-shadow: var(--raised);
-  padding: 3px;
-}
-
-[data-amplify-authenticator] .amplify-button--primary {
-  min-height: 23px;
-  border: none;
-  border-radius: 0;
-  background: var(--face);
-  color: var(--dark);
-  box-shadow: var(--raised);
-  font-size: 12px;
-}
-
-[data-amplify-authenticator] .amplify-button--primary:hover {
-  background: var(--face);
-  color: var(--dark);
-}
-
-[data-amplify-authenticator] .amplify-button--primary:active {
-  box-shadow: var(--pressed);
-}
-
-[data-amplify-authenticator] .amplify-input,
-[data-amplify-authenticator] .amplify-select {
-  border: none;
-  border-radius: 0;
-  background: var(--field);
-  box-shadow: var(--sunken);
-  font-size: 13px;
-}
-
-[data-amplify-authenticator] .amplify-field-group__outer-end .amplify-button {
-  border: none;
-  border-radius: 0;
-  background: var(--face);
-  box-shadow: var(--raised);
-}
-
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
@@ -751,4 +690,24 @@ textarea:focus-visible {
     var(--title-a) 0 8px,
     transparent 8px 10px
   );
+}
+
+/* ---------- 로그인 창 ---------- */
+.window.auth {
+  max-width: 24rem;
+}
+
+.form-row {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.form-row span {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 12px;
+}
+
+.form-help {
+  margin-bottom: 10px;
 }
