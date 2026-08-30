@@ -236,7 +236,9 @@ export function Auth({
 
           {mode === 'confirm' ? (
             <p className="muted">
-              메일로 받은 6자리 코드를 넣으면 가입이 끝납니다.
+              메일로 받은 6자리 코드를 넣으면 가입이 끝납니다. 안 보이면
+              스팸함을 확인해 주세요 — 발신자는{' '}
+              <code>no-reply@verificationemail.com</code> 입니다.
             </p>
           ) : (
             <div className="tabs" role="tablist">
