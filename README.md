@@ -101,11 +101,26 @@ npm run dev
 
 ## 3. 프론트엔드 배포 (Amplify Hosting)
 
-1. GitHub 에 저장소를 만들고 push
-2. AWS 콘솔 → **Amplify** → 새 앱 생성 → GitHub 연결 → 브랜치 선택
+배포 주소의 앞부분은 **브랜치 이름**이 된다. 그래서 `main` 을 그대로 쓰는 대신
+배포 전용 브랜치 `oneline-retro` 를 두고 거기로 밀어 넣는다.
+
+```bash
+git push origin main:oneline-retro
+```
+
+`main` 은 작업용으로 남고, 배포하고 싶을 때만 위 한 줄을 실행하면 된다.
+브랜치를 오갈 필요가 없다.
+
+1. AWS 콘솔 → **Amplify** → 새 앱 생성 → GitHub 연결
+2. 저장소를 고르고 브랜치는 **`oneline-retro`** 를 선택
 3. `amplify.yml` 이 자동 인식된다
 4. **환경 변수**에 `.env` 와 같은 4개 값을 등록 (이 단계를 빠뜨리면 설정 안내 화면만 나온다)
-5. 배포 후 `https://main.xxxxx.amplifyapp.com` 접속
+5. 배포 후 `https://oneline-retro.xxxxx.amplifyapp.com` 접속
+
+`xxxxx` 는 Amplify 가 만드는 앱 ID 라 고를 수 없다. 이름을 온전히 정하려면
+사용자 지정 도메인을 연결해야 한다.
+
+클라이언트 라우터를 쓰지 않으므로 SPA 리라이트 규칙은 따로 넣지 않아도 된다.
 
 ### 배포 후 조여야 할 것
 
