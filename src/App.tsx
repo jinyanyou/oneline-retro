@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { isConfigured, IS_LOCAL } from './amplify-config';
 import { deleteEntry, listEntries, saveEntry, type Entry } from './api';
 import { MOODS, moodOf, type Mood } from './moods';
 import { formatDate, todayKey } from './date';
+import { AboutDialog } from './AboutDialog';
 import { Auth } from './Auth';
 import { Calendar } from './Calendar';
 import { ConfirmDialog } from './ConfirmDialog';
+import { HelpDialog } from './HelpDialog';
+import { MenuBar, type MenuSpec } from './MenuBar';
 import { Notice } from './Notice';
 import { Stats } from './Stats';
 import { TitleBar } from './TitleBar';
@@ -24,82 +27,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
-
-/**
- * 메뉴 막대. 파일 메뉴만 실제로 열리고 나머지는 장식이다.
- * 로그아웃이 제목 표시줄 X 버튼에만 있어서 아무도 못 찾았다.
- *
- * 로컬 모드에는 로그아웃할 세션이 없다. 그때는 파일 메뉴도 나머지처럼
- * 흐리게 두어, 열었다가 빈 메뉴를 보는 일이 없게 한다.
- */
-function MenuBar({ onSignOut }: { onSignOut: (() => void) | null }) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-
-    // 바깥을 누르거나 Esc 를 누르면 닫는다. 그 시절 메뉴가 그랬다.
-    const close = () => setOpen(false);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('click', close);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('click', close);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  if (!onSignOut) {
-    return (
-      <div className="menubar">
-        {['파', '편', '보', '도'].map((key, i) => (
-          <span key={key} className="menu-title dim" aria-hidden="true">
-            <u>{key}</u>
-            {['일', '집', '기', '움말'][i]}
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="menubar">
-      <div className="menu">
-        <button
-          className={`menu-title ${open ? 'open' : ''}`}
-          aria-expanded={open}
-          aria-haspopup="menu"
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpen((v) => !v);
-          }}
-        >
-          <u>파</u>일
-        </button>
-
-        {open && (
-          <div className="menu-list" role="menu">
-            <button className="menu-item" role="menuitem" onClick={onSignOut}>
-              로그아웃
-            </button>
-          </div>
-        )}
-      </div>
-
-      <span className="menu-title dim" aria-hidden="true">
-        <u>편</u>집
-      </span>
-      <span className="menu-title dim" aria-hidden="true">
-        <u>보</u>기
-      </span>
-      <span className="menu-title dim" aria-hidden="true">
-        <u>도</u>움말
-      </span>
-    </div>
-  );
-}
 
 function SetupNotice() {
   return (
@@ -171,6 +98,12 @@ function Journal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  // 보기 메뉴에서 끄고 켠다. 그 시절 보기 메뉴에 꼭 있던 항목이다.
+  const [showStatusBar, setShowStatusBar] = useState(true);
+  const [dialog, setDialog] = useState<'help' | 'about' | null>(null);
+
+  // 편집 메뉴가 입력 칸을 직접 건드린다 (모두 선택, 지운 뒤 초점 되돌리기).
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -209,7 +142,7 @@ function Journal({
     [entries],
   );
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     const trimmed = text.trim();
     if (!trimmed) {
       setError('내용을 입력해 주세요.');
@@ -233,7 +166,7 @@ function Journal({
     } finally {
       setSaving(false);
     }
-  }
+  }, [editing, text, mood]);
 
   const handleDelete = useCallback(
     async (date: string) => {
@@ -254,6 +187,150 @@ function Journal({
     [editing],
   );
 
+  /** 지금 입력 칸에 올라와 있는 날짜의 저장된 기록. 없으면 아직 안 쓴 날이다. */
+  const saved = entries.find((e) => e.date === editing);
+
+  const selectAll = useCallback(() => {
+    textareaRef.current?.focus();
+    textareaRef.current?.select();
+  }, []);
+
+  const clearInput = useCallback(() => {
+    setText('');
+    setMood(null);
+    setSavedAt(null);
+    textareaRef.current?.focus();
+  }, []);
+
+  const copyText = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice('입력 칸의 글을 복사했습니다.');
+    } catch {
+      setError('복사하지 못했습니다. 직접 선택해 복사해 주세요.');
+    }
+  }, [text]);
+
+  // 메뉴에 적어 둔 단축키를 실제로 처리한다.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const el = e.target;
+      const typing =
+        el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
+
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setDialog('help');
+        return;
+      }
+      if (e.key === 'F5') {
+        e.preventDefault();
+        void load();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void handleSave();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        selectAll();
+        return;
+      }
+      // Del 은 입력 칸 밖에 있을 때만 듣는다. 글을 쓰다 기록이 날아가면 곤란하다.
+      if (e.key === 'Delete' && !typing && saved) {
+        e.preventDefault();
+        setPending(editing);
+      }
+    }
+
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [load, handleSave, selectAll, saved, editing]);
+
+  const menus: MenuSpec[] = [
+    {
+      mnemonic: '파',
+      rest: '일',
+      items: [
+        {
+          label: '저장',
+          accel: 'Ctrl+S',
+          disabled: saving || !text.trim(),
+          onSelect: () => void handleSave(),
+        },
+        { separator: true },
+        {
+          label: '로그아웃',
+          // 로컬 모드에는 로그아웃할 세션이 없다. 항목은 두되 흐리게 둔다.
+          disabled: !signOut,
+          onSelect: () => signOut?.(),
+        },
+      ],
+    },
+    {
+      mnemonic: '편',
+      rest: '집',
+      items: [
+        {
+          label: '모두 선택',
+          accel: 'Ctrl+A',
+          disabled: !text,
+          onSelect: selectAll,
+        },
+        {
+          label: '복사',
+          accel: 'Ctrl+C',
+          disabled: !text,
+          onSelect: () => void copyText(),
+        },
+        {
+          label: '입력 지우기',
+          disabled: !text && !mood,
+          onSelect: clearInput,
+        },
+        { separator: true },
+        {
+          // 위의 "입력 지우기" 와 다르다. 이건 서버에 저장된 것을 지운다.
+          label: '이 날 기록 삭제',
+          accel: 'Del',
+          disabled: !saved,
+          onSelect: () => setPending(editing),
+        },
+      ],
+    },
+    {
+      mnemonic: '보',
+      rest: '기',
+      items: [
+        ...TABS.map((t) => ({
+          label: t.label,
+          mark: 'radio' as const,
+          checked: tab === t.id,
+          onSelect: () => setTab(t.id),
+        })),
+        { separator: true },
+        {
+          label: '상태 표시줄',
+          mark: 'check' as const,
+          checked: showStatusBar,
+          onSelect: () => setShowStatusBar((v) => !v),
+        },
+        { label: '새로 고침', accel: 'F5', onSelect: () => void load() },
+      ],
+    },
+    {
+      mnemonic: '도',
+      rest: '움말',
+      items: [
+        { label: '도움말 항목', accel: 'F1', onSelect: () => setDialog('help') },
+        { separator: true },
+        { label: '한마디 정보', onSelect: () => setDialog('about') },
+      ],
+    },
+  ];
+
   const isToday = editing === today;
   const remaining = MAX_TEXT - text.length;
 
@@ -265,7 +342,7 @@ function Journal({
           onClose={signOut ?? undefined}
           closeLabel="로그아웃"
         />
-        <MenuBar onSignOut={signOut} />
+        <MenuBar menus={menus} />
 
         <div className="window-body">
           <fieldset className="group">
@@ -295,6 +372,7 @@ function Journal({
             </div>
 
             <textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value.slice(0, MAX_TEXT))}
               placeholder={
@@ -376,17 +454,29 @@ function Journal({
           </div>
         </div>
 
-        <div className="statusbar">
-          <span className="status-panel">기록 {entries.length}개</span>
-          <span className="status-panel grow">
-            {savedAt ? `${savedAt} 저장됨` : '준비'}
-          </span>
-          <span className="status-panel">{today}</span>
-        </div>
+        {showStatusBar && (
+          <div className="statusbar">
+            <span className="status-panel">기록 {entries.length}개</span>
+            <span className="status-panel grow">
+              {savedAt ? `${savedAt} 저장됨` : '준비'}
+            </span>
+            <span className="status-panel">{today}</span>
+          </div>
+        )}
       </div>
 
       {notice && (
         <Notice title="한마디" message={notice} onClose={dismissNotice} />
+      )}
+
+      {dialog === 'help' && <HelpDialog onClose={() => setDialog(null)} />}
+
+      {dialog === 'about' && (
+        <AboutDialog
+          email={email}
+          count={entries.length}
+          onClose={() => setDialog(null)}
+        />
       )}
 
       {pending && (

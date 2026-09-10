@@ -195,16 +195,20 @@ button.tb-btn:active {
   top: 100%;
   left: 0;
   z-index: 5;
-  min-width: 9rem;
+  min-width: 12rem;
   padding: 2px;
   background: var(--face);
   box-shadow: var(--raised);
 }
 
+/* 표시 칸 · 이름 · 단축키 세 칸. 단축키는 오른쪽에 붙는다. */
 .menu-item {
-  display: block;
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 10px;
+  align-items: center;
   width: 100%;
-  padding: 3px 24px 3px 10px;
+  padding: 3px 10px 3px 4px;
   border: none;
   background: none;
   color: var(--dark);
@@ -215,10 +219,34 @@ button.tb-btn:active {
   cursor: pointer;
 }
 
-.menu-item:hover,
-.menu-item:focus-visible {
+.menu-item:not(:disabled):hover,
+.menu-item:not(:disabled):focus-visible {
   background: var(--title-a);
   color: var(--title-text);
+}
+
+/* 흐린 항목. 그 시절엔 회색 글자에 흰 그림자를 한 겹 깔아 눌러 넣었다. */
+.menu-item:disabled {
+  color: var(--shadow);
+  text-shadow: 1px 1px 0 var(--light);
+  cursor: default;
+}
+
+.menu-mark {
+  font-size: 10px;
+  line-height: 1;
+  text-align: center;
+}
+
+.menu-accel {
+  font-size: 11px;
+}
+
+.menu-sep {
+  height: 0;
+  margin: 3px 2px;
+  border-top: 1px solid var(--shadow);
+  border-bottom: 1px solid var(--light);
 }
 
 .menubar u {
@@ -925,4 +953,120 @@ textarea:focus-visible {
   .window.notice {
     animation: none;
   }
+}
+
+/* ---------- 도움말 항목 ---------- */
+.window.help {
+  max-width: 30rem;
+  margin: 0;
+}
+
+.help-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px 12px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+
+.help-body h3 {
+  margin: 14px 0 4px;
+  font-size: 12px;
+  color: var(--title-a);
+}
+
+.help-body h3:first-child {
+  margin-top: 0;
+}
+
+.help-body p {
+  margin: 0 0 4px;
+}
+
+/* 단축키 표. 키 이름은 그 시절처럼 튀어나온 자판 모양으로 둔다. */
+.keys {
+  margin: 6px 0 8px;
+  border-collapse: separate;
+  border-spacing: 0 3px;
+}
+
+.keys th {
+  padding: 1px 6px;
+  background: var(--face);
+  box-shadow: var(--raised);
+  font-size: 11px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.keys td {
+  padding-left: 10px;
+}
+
+/* ---------- 한마디 정보 ---------- */
+.window.about {
+  max-width: 24rem;
+  margin: 0;
+}
+
+.about-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 10px;
+}
+
+/* 문서 아이콘. 로그인 화면의 것과 같은 모양이다. */
+.about-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 42px;
+  background: var(--light);
+  box-shadow: var(--raised);
+  display: grid;
+  place-items: center;
+}
+
+.about-lines {
+  width: 18px;
+  height: 14px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--title-a) 0 2px,
+    transparent 2px 5px
+  );
+}
+
+.about-name {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--title-a);
+}
+
+.about-facts {
+  margin: 0 12px;
+  padding: 8px 10px;
+  background: var(--face);
+  box-shadow: var(--sunken-thin);
+}
+
+.about-facts dl {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 3px 8px;
+  margin: 0;
+}
+
+.about-facts dt {
+  color: var(--shadow);
+}
+
+.about-facts dd {
+  margin: 0;
+}
+
+.about-foot {
+  margin: 10px 12px 0;
+  color: var(--shadow);
 }
