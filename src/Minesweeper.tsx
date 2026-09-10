@@ -125,7 +125,20 @@ function Led({ value, label }: { value: number; label: string }) {
  * 왼쪽 단추로 열고, 오른쪽 단추로 깃발을 꽂는다. 열린 숫자를 두 번 누르면
  * 그 둘레의 깃발 수가 숫자와 같을 때 나머지를 한꺼번에 연다.
  */
-export function Minesweeper({ onClose }: { onClose: () => void }) {
+export function Minesweeper({
+  onClose,
+  onMinimize,
+  onMaximize,
+  maximized,
+  minimized,
+}: {
+  onClose: () => void;
+  onMinimize: () => void;
+  onMaximize: () => void;
+  maximized: boolean;
+  /** 최소화는 감추기만 한다. 이 컴포넌트를 걷어내면 판이 처음으로 돌아간다. */
+  minimized: boolean;
+}) {
   const [level, setLevel] = useState<LevelId>('beginner');
   const [board, setBoard] = useState<Cell[]>(() => emptyBoard('beginner'));
   const [status, setStatus] = useState<Status>('ready');
@@ -150,6 +163,10 @@ export function Minesweeper({ onClose }: { onClose: () => void }) {
   }, [status]);
 
   useEffect(() => {
+    // 내려가 있는 동안에는 키를 받지 않는다. 보이지도 않는 창이 Esc 를
+    // 가로채면 안 된다.
+    if (minimized) return;
+
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
       if (e.key === 'F2') {
@@ -159,7 +176,7 @@ export function Minesweeper({ onClose }: { onClose: () => void }) {
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose, reset, level]);
+  }, [onClose, reset, level, minimized]);
 
   const finish = useCallback((next: Cell[], hit: number | null) => {
     if (hit !== null) {
@@ -268,15 +285,21 @@ export function Minesweeper({ onClose }: { onClose: () => void }) {
   const done = status === 'won' || status === 'lost';
 
   return (
-    <div className="modal-backdrop game">
+    <div className="modal-backdrop game" hidden={minimized}>
       <div
-        className="window mine"
+        className={`window mine${maximized ? ' maximized' : ''}`}
         role="dialog"
-        aria-modal="true"
         aria-label="지뢰 찾기"
         onContextMenu={(e) => e.preventDefault()}
       >
-        <TitleBar title="지뢰 찾기" onClose={onClose} closeLabel="닫기" />
+        <TitleBar
+          title="지뢰 찾기"
+          onClose={onClose}
+          closeLabel="닫기"
+          onMinimize={onMinimize}
+          onMaximize={onMaximize}
+          maximized={maximized}
+        />
         <MenuBar menus={menus} />
 
         <div className="mine-body">

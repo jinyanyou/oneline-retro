@@ -28,6 +28,57 @@ export interface MenuSpec {
 }
 
 /**
+ * 펼쳐진 메뉴 한 장.
+ *
+ * 메뉴 막대와 작업 표시줄의 시작 메뉴가 같은 것을 쓴다. 시작 메뉴는 위로
+ * 펼쳐지므로 className 으로 방향만 바꿔 준다.
+ */
+export function MenuList({
+  items,
+  className = '',
+  onDone,
+}: {
+  items: MenuEntry[];
+  className?: string;
+  onDone: () => void;
+}) {
+  return (
+    <div className={`menu-list ${className}`.trim()} role="menu">
+      {items.map((item, j) =>
+        item.separator ? (
+          <div className="menu-sep" key={`sep-${j}`} role="separator" />
+        ) : (
+          <button
+            type="button"
+            key={item.label}
+            className="menu-item"
+            role={
+              item.mark === 'radio'
+                ? 'menuitemradio'
+                : item.mark === 'check'
+                  ? 'menuitemcheckbox'
+                  : 'menuitem'
+            }
+            aria-checked={item.mark ? Boolean(item.checked) : undefined}
+            disabled={item.disabled}
+            onClick={() => {
+              onDone();
+              item.onSelect();
+            }}
+          >
+            <span className="menu-mark" aria-hidden="true">
+              {item.checked ? (item.mark === 'radio' ? '●' : '✓') : ''}
+            </span>
+            <span>{item.label}</span>
+            <span className="menu-accel">{item.accel ?? ''}</span>
+          </button>
+        ),
+      )}
+    </div>
+  );
+}
+
+/**
  * 메뉴 막대.
  *
  * 하나가 열려 있을 때 다른 제목에 마우스를 얹으면 그쪽으로 옮겨 간다.
@@ -77,39 +128,7 @@ export function MenuBar({ menus }: { menus: MenuSpec[] }) {
           </button>
 
           {open === i && (
-            <div className="menu-list" role="menu">
-              {menu.items.map((item, j) =>
-                item.separator ? (
-                  // eslint-disable-next-line react/no-array-index-key
-                  <div className="menu-sep" key={`sep-${j}`} role="separator" />
-                ) : (
-                  <button
-                    type="button"
-                    key={item.label}
-                    className="menu-item"
-                    role={
-                      item.mark === 'radio'
-                        ? 'menuitemradio'
-                        : item.mark === 'check'
-                          ? 'menuitemcheckbox'
-                          : 'menuitem'
-                    }
-                    aria-checked={item.mark ? Boolean(item.checked) : undefined}
-                    disabled={item.disabled}
-                    onClick={() => {
-                      setOpen(null);
-                      item.onSelect();
-                    }}
-                  >
-                    <span className="menu-mark" aria-hidden="true">
-                      {item.checked ? (item.mark === 'radio' ? '●' : '✓') : ''}
-                    </span>
-                    <span>{item.label}</span>
-                    <span className="menu-accel">{item.accel ?? ''}</span>
-                  </button>
-                ),
-              )}
-            </div>
+            <MenuList items={menu.items} onDone={() => setOpen(null)} />
           )}
         </div>
       ))}

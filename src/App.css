@@ -35,6 +35,9 @@
 
   /* 얕게 파인 면 — 상태 표시줄처럼 1겹이면 충분한 곳 */
   --sunken-thin: inset -1px -1px var(--light), inset 1px 1px var(--shadow);
+
+  /* 작업 표시줄 높이. 최대화한 창이 여기까지만 차야 한다. */
+  --taskbar: 30px;
 }
 
 * {
@@ -137,6 +140,34 @@ button.tb-btn:active {
   height: 7px;
   border: 1px solid var(--dark);
   border-top-width: 2px;
+}
+
+/* 최대화된 창의 단추. 창 두 장이 겹친 모양으로 바뀐다. */
+.glyph-restore {
+  position: relative;
+  width: 9px;
+  height: 9px;
+}
+
+.glyph-restore::before,
+.glyph-restore::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 5px;
+  border: 1px solid var(--dark);
+  border-top-width: 2px;
+}
+
+.glyph-restore::before {
+  top: 0;
+  right: 0;
+}
+
+.glyph-restore::after {
+  bottom: 0;
+  left: 0;
+  background: var(--face);
 }
 
 .glyph-close {
@@ -1091,10 +1122,17 @@ textarea:focus-visible {
 
 /* ---------- 지뢰 찾기 ---------- */
 
-/* 게임은 눌러도 닫히지 않는다. 판 위를 누르다 창이 사라지면 곤란하다. */
+/* 게임은 대화 상자가 아니라 창이다. 뒤를 막지 않으므로 한마디도 계속
+   쓸 수 있고, 작업 표시줄도 그대로 눌린다. */
 .modal-backdrop.game {
   align-items: start;
   padding-top: 3rem;
+  background: none;
+  pointer-events: none;
+}
+
+.window.mine {
+  pointer-events: auto;
 }
 
 .window.mine {
@@ -1231,4 +1269,110 @@ textarea:focus-visible {
 
 .window.mine .status-panel {
   white-space: normal;
+}
+
+/* ---------- 최소화 · 최대화 ---------- */
+
+/* 최소화는 감추기만 한다. 걷어내면 쓰던 초안과 게임판이 날아간다. */
+.window[hidden],
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
+
+/* 작업 표시줄 위까지만 채운다. 표시줄을 덮으면 되돌아올 길이 막힌다. */
+.window.maximized {
+  position: fixed;
+  inset: 0 0 var(--taskbar) 0;
+  z-index: 5;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  overflow: auto;
+}
+
+/* ---------- 작업 표시줄 ---------- */
+.taskbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--taskbar);
+  padding: 2px 3px;
+  background: var(--face);
+  box-shadow:
+    inset 0 1px var(--light),
+    inset 0 2px var(--highlight);
+}
+
+.btn.start {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 22px;
+  padding: 2px 7px 2px 4px;
+  font-weight: 700;
+}
+
+.btn.start.on {
+  box-shadow: var(--pressed);
+}
+
+/* 창문 네 칸. 그 시절 시작 단추에 붙어 있던 그림 자리다. */
+.start-flag {
+  width: 12px;
+  height: 12px;
+  background:
+    linear-gradient(#d84315 0 50%, #2e7d32 50% 100%) left / 5px 100% no-repeat,
+    linear-gradient(#1565c0 0 50%, #f9a825 50% 100%) right / 5px 100% no-repeat;
+}
+
+.task-buttons {
+  display: flex;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.btn.task-btn {
+  min-width: 0;
+  width: 10rem;
+  min-height: 22px;
+  padding: 2px 8px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 올라와 있는 창은 눌린 모양으로 둔다 */
+.btn.task-btn.on {
+  box-shadow: var(--pressed);
+  padding: 3px 7px 1px 9px;
+}
+
+.tray {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  box-shadow: var(--sunken-thin);
+}
+
+.tray-clock {
+  font-size: 12px;
+}
+
+/* 시작 메뉴는 위로 펼쳐진다 */
+.menu-list.up {
+  top: auto;
+  bottom: 100%;
+}
+
+.menu-list.start-menu {
+  min-width: 10rem;
 }

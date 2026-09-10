@@ -9,10 +9,11 @@ import { Auth } from './Auth';
 import { Calendar } from './Calendar';
 import { ConfirmDialog } from './ConfirmDialog';
 import { HelpDialog } from './HelpDialog';
-import { MenuBar, type MenuSpec } from './MenuBar';
+import { MenuBar, type MenuEntry, type MenuSpec } from './MenuBar';
 import { Minesweeper } from './Minesweeper';
 import { Notice } from './Notice';
 import { Stats } from './Stats';
+import { Taskbar, type TaskWindow } from './Taskbar';
 import { TitleBar } from './TitleBar';
 import './App.css';
 
@@ -28,6 +29,9 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
+
+/** 창 상태. 최소화한 창은 작업 표시줄에만 남는다. */
+type WinState = 'normal' | 'min' | 'max';
 
 function SetupNotice() {
   return (
@@ -103,6 +107,9 @@ function Journal({
   const [showStatusBar, setShowStatusBar] = useState(true);
   const [dialog, setDialog] = useState<'help' | 'about' | null>(null);
   const [game, setGame] = useState(false);
+  // 창마다 보통 / 최소화 / 최대화 셋 중 하나다.
+  const [appWin, setAppWin] = useState<WinState>('normal');
+  const [gameWin, setGameWin] = useState<WinState>('normal');
 
   // 편집 메뉴가 입력 칸을 직접 건드린다 (모두 선택, 지운 뒤 초점 되돌리기).
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -213,12 +220,25 @@ function Journal({
     }
   }, [text]);
 
+  /** 이미 열려 있는데 최소화돼 있었다면 다시 올린다. */
+  const openGame = useCallback(() => {
+    setGame(true);
+    setGameWin('normal');
+  }, []);
+
   // 메뉴에 적어 둔 단축키를 실제로 처리한다.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       // 게임이나 대화 상자가 떠 있으면 앱 단축키는 쉰다. 특히 Del 이
       // 뒤에서 기록을 지우려 드는 일이 없어야 한다.
-      if (game || dialog !== null || pending !== null) return;
+      if (
+        appWin === 'min' ||
+        (game && gameWin !== 'min') ||
+        dialog !== null ||
+        pending !== null
+      ) {
+        return;
+      }
 
       const el = e.target;
       const typing =
@@ -253,7 +273,18 @@ function Journal({
 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [load, handleSave, selectAll, saved, editing, game, dialog, pending]);
+  }, [
+    load,
+    handleSave,
+    selectAll,
+    saved,
+    editing,
+    game,
+    gameWin,
+    appWin,
+    dialog,
+    pending,
+  ]);
 
   const menus: MenuSpec[] = [
     {
@@ -329,7 +360,7 @@ function Journal({
     {
       mnemonic: '게',
       rest: '임',
-      items: [{ label: '지뢰 찾기', onSelect: () => setGame(true) }],
+      items: [{ label: '지뢰 찾기', onSelect: openGame }],
     },
     {
       mnemonic: '도',
@@ -342,16 +373,55 @@ function Journal({
     },
   ];
 
+  const taskWindows: TaskWindow[] = [
+    {
+      id: 'app',
+      title: '한마디',
+      minimized: appWin === 'min',
+      // 올라와 있는 창을 다시 누르면 내려간다. 그 시절 그대로다.
+      onToggle: () =>
+        setAppWin((w) => (w === 'min' ? 'normal' : 'min')),
+    },
+    ...(game
+      ? [
+          {
+            id: 'game',
+            title: '지뢰 찾기',
+            minimized: gameWin === 'min',
+            onToggle: () =>
+              setGameWin((w) => (w === 'min' ? 'normal' : 'min')),
+          },
+        ]
+      : []),
+  ];
+
+  const startItems: MenuEntry[] = [
+    { label: '지뢰 찾기', onSelect: openGame },
+    { separator: true },
+    { label: '도움말 항목', accel: 'F1', onSelect: () => setDialog('help') },
+    { label: '한마디 정보', onSelect: () => setDialog('about') },
+    { separator: true },
+    { label: '로그아웃', disabled: !signOut, onSelect: () => signOut?.() },
+  ];
+
   const isToday = editing === today;
   const remaining = MAX_TEXT - text.length;
 
   return (
     <div className="desktop">
-      <div className="window app">
+      <div
+        className={`window app${appWin === 'max' ? ' maximized' : ''}`}
+        hidden={appWin === 'min'}
+      >
         <TitleBar
           title={`한마디 - ${email || '사용자'}`}
           onClose={signOut ?? undefined}
           closeLabel="로그아웃"
+          onMinimize={() => setAppWin('min')}
+          onMaximize={() =>
+            setAppWin((w) => (w === 'max' ? 'normal' : 'max'))
+          }
+          maximized={appWin === 'max'}
         />
         <MenuBar menus={menus} />
 
@@ -480,7 +550,17 @@ function Journal({
         <Notice title="한마디" message={notice} onClose={dismissNotice} />
       )}
 
-      {game && <Minesweeper onClose={() => setGame(false)} />}
+      {game && (
+        <Minesweeper
+          onClose={() => setGame(false)}
+          onMinimize={() => setGameWin('min')}
+          onMaximize={() =>
+            setGameWin((w) => (w === 'max' ? 'normal' : 'max'))
+          }
+          maximized={gameWin === 'max'}
+          minimized={gameWin === 'min'}
+        />
+      )}
 
       {dialog === 'help' && <HelpDialog onClose={() => setDialog(null)} />}
 
@@ -500,6 +580,8 @@ function Journal({
           onCancel={() => setPending(null)}
         />
       )}
+
+      <Taskbar windows={taskWindows} startItems={startItems} />
     </div>
   );
 }
