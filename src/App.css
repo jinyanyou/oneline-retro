@@ -1088,3 +1088,147 @@ textarea:focus-visible {
   margin: 10px 12px 0;
   color: var(--shadow);
 }
+
+/* ---------- 지뢰 찾기 ---------- */
+
+/* 게임은 눌러도 닫히지 않는다. 판 위를 누르다 창이 사라지면 곤란하다. */
+.modal-backdrop.game {
+  align-items: start;
+  padding-top: 3rem;
+}
+
+.window.mine {
+  max-width: none;
+  width: max-content;
+  margin: 0;
+}
+
+ /* 창 너비를 판에 맞춘다. 머리줄과 상태 표시줄이 판보다 넓어지면 안 된다. */
+.mine-body {
+  display: grid;
+  gap: 6px;
+  width: max-content;
+  padding: 6px;
+}
+
+/* 숫자판 두 개와 얼굴 단추. 그 시절엔 여기만 따로 파여 있었다. */
+.mine-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  box-shadow: var(--sunken);
+}
+
+.led {
+  min-width: 2.9rem;
+  padding: 1px 4px;
+  background: #000;
+  color: #f00;
+  font-family: "Consolas", "DejaVu Sans Mono", monospace;
+  font-size: 19px;
+  line-height: 1.15;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* .btn 의 min-width: 75px 를 풀어야 한다. 안 그러면 얼굴 단추가
+   판보다 넓어져 창 전체가 따라 늘어난다. */
+.btn.face {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* 눌러도 글자가 밀리지 않게 한다. 26px 안에서는 1px 도 크게 흔들린다. */
+.btn.face:active:not(:disabled) {
+  padding: 0;
+}
+
+/* 고급은 30칸이라 좁은 화면에서 넘친다. 판만 옆으로 굴린다. */
+.mine-scroll {
+  max-width: calc(100vw - 6rem);
+  overflow-x: auto;
+  box-shadow: var(--sunken);
+}
+
+.mine-grid {
+  display: grid;
+  width: max-content;
+}
+
+.mine-cell {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: var(--face);
+  box-shadow: var(--raised);
+  color: var(--dark);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* 열린 칸은 튀어나온 면을 버리고 왼쪽 위에만 금을 남긴다 */
+.mine-cell.open {
+  box-shadow: inset 1px 1px var(--shadow);
+  cursor: default;
+}
+
+.mine-cell.boom {
+  background: #a80000;
+  color: var(--light);
+}
+
+/* 깃발은 붉다. 원본이 그랬고, 검은 지뢰와 한눈에 갈라져야 한다. */
+.mine-cell.flag {
+  color: #a80000;
+}
+
+.mine-cell.wrong {
+  color: #a80000;
+}
+
+/* 숫자 여덟 개의 색. 원본의 배색 그대로다. */
+.mine-cell[data-near="1"] {
+  color: #0000ff;
+}
+.mine-cell[data-near="2"] {
+  color: #008000;
+}
+.mine-cell[data-near="3"] {
+  color: #ff0000;
+}
+.mine-cell[data-near="4"] {
+  color: #000080;
+}
+.mine-cell[data-near="5"] {
+  color: #800000;
+}
+.mine-cell[data-near="6"] {
+  color: #008080;
+}
+.mine-cell[data-near="7"] {
+  color: var(--dark);
+}
+.mine-cell[data-near="8"] {
+  color: var(--shadow);
+}
+
+/* 판이 좁을 때는 문구가 접히게 둔다. 창을 늘리는 쪽이 더 어색하다. */
+.window.mine .statusbar {
+  margin-top: 0;
+}
+
+.window.mine .status-panel {
+  white-space: normal;
+}

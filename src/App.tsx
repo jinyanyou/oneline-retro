@@ -10,6 +10,7 @@ import { Calendar } from './Calendar';
 import { ConfirmDialog } from './ConfirmDialog';
 import { HelpDialog } from './HelpDialog';
 import { MenuBar, type MenuSpec } from './MenuBar';
+import { Minesweeper } from './Minesweeper';
 import { Notice } from './Notice';
 import { Stats } from './Stats';
 import { TitleBar } from './TitleBar';
@@ -101,6 +102,7 @@ function Journal({
   // 보기 메뉴에서 끄고 켠다. 그 시절 보기 메뉴에 꼭 있던 항목이다.
   const [showStatusBar, setShowStatusBar] = useState(true);
   const [dialog, setDialog] = useState<'help' | 'about' | null>(null);
+  const [game, setGame] = useState(false);
 
   // 편집 메뉴가 입력 칸을 직접 건드린다 (모두 선택, 지운 뒤 초점 되돌리기).
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -214,6 +216,10 @@ function Journal({
   // 메뉴에 적어 둔 단축키를 실제로 처리한다.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      // 게임이나 대화 상자가 떠 있으면 앱 단축키는 쉰다. 특히 Del 이
+      // 뒤에서 기록을 지우려 드는 일이 없어야 한다.
+      if (game || dialog !== null || pending !== null) return;
+
       const el = e.target;
       const typing =
         el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement;
@@ -247,7 +253,7 @@ function Journal({
 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [load, handleSave, selectAll, saved, editing]);
+  }, [load, handleSave, selectAll, saved, editing, game, dialog, pending]);
 
   const menus: MenuSpec[] = [
     {
@@ -319,6 +325,11 @@ function Journal({
         },
         { label: '새로 고침', accel: 'F5', onSelect: () => void load() },
       ],
+    },
+    {
+      mnemonic: '게',
+      rest: '임',
+      items: [{ label: '지뢰 찾기', onSelect: () => setGame(true) }],
     },
     {
       mnemonic: '도',
@@ -468,6 +479,8 @@ function Journal({
       {notice && (
         <Notice title="한마디" message={notice} onClose={dismissNotice} />
       )}
+
+      {game && <Minesweeper onClose={() => setGame(false)} />}
 
       {dialog === 'help' && <HelpDialog onClose={() => setDialog(null)} />}
 
