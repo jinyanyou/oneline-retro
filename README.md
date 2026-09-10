@@ -5,6 +5,8 @@
 
 **→ [한마디 열기](https://oneline-retro.dq7wl11l9whxd.amplifyapp.com)**
 
+AWS 없이 이 컴퓨터에서만 돌릴 수도 있다 → [로컬 모드](#aws-없이-쓰기-로컬-모드)
+
 하루에 한 줄이면 충분하다는 생각에서 시작했다. 길게 쓰려면 부담스러워 미루게
 되고, 미루면 아예 안 쓰게 된다. 그래서 입력 칸은 280자로 막아 두고, 기분은
 얼굴 세 개 중에 고르기만 하면 되게 했다. 대신 쌓인 기록을 달력과 통계로 돌아볼
@@ -60,6 +62,7 @@
 | 로직 | AWS Lambda (Node.js 24) |
 | 데이터 | DynamoDB |
 | 인프라 | AWS CDK (TypeScript) |
+| 로컬 모드 | Node 기본 http 서버 + JSON 파일 (AWS 를 쓰지 않음) |
 
 ```
 브라우저 ──① 이메일 + 비밀번호 ──▶ Cognito User Pool
@@ -97,7 +100,15 @@
 ├── infra/                  백엔드 (AWS CDK)
 │   ├── bin/app.ts          CDK 진입점
 │   ├── lib/retro-stack.ts  리소스 정의
-│   └── lambda/entries.js   API 핸들러
+│   └── lambda/
+│       ├── core.js         라우팅 + 검증 (저장소를 주입받는다)
+│       ├── dynamo-store.js DynamoDB 저장소
+│       └── entries.js      Lambda 진입점 (core + dynamo-store)
+├── local/                  로컬 모드 (AWS 없이 쓰기)
+│   ├── dev.js              API 서버 + Vite 를 한 번에 띄운다
+│   ├── server.js           API 서버 (core 를 그대로 재사용)
+│   ├── file-store.js       JSON 파일 저장소
+│   └── data.json           기록이 쌓이는 곳 (git 에 올리지 않는다)
 └── amplify.yml             Amplify Hosting 빌드 설정
 ```
 
@@ -116,7 +127,57 @@
 `date` 는 `YYYY-MM-DD`, `mood` 는 `good` / `soso` / `bad` 또는 생략.
 `from` 과 `to` 는 함께 줘야 적용되고, `limit` 은 서버에서 365 로 잘린다.
 
-## 로컬에서 실행하기
+## AWS 없이 쓰기 (로컬 모드)
+
+계정도, 배포도, 인터넷도 필요 없다. 한 줄이면 된다.
+
+```bash
+npm install
+npm run dev:local      # http://localhost:5173
+```
+
+로그인 화면을 건너뛰고 바로 열린다. 기록은 `local/data.json` 에 쌓인다.
+
+```
+한마디 — 로컬 모드 (AWS 를 쓰지 않는다)
+
+  ➜  Local:   http://localhost:5173/
+
+  API      http://localhost:8787
+  기록 파일 C:\dev\local\data.json
+```
+
+한 프로세스에서 Vite 와 API 서버가 같이 뜬다. API 서버는 `127.0.0.1` 에만
+붙으므로 같은 공유기의 다른 기기에서도 닿지 않는다. 로그인이 없는 대신
+사용자는 `local` 하나로 고정된다.
+
+바꿀 만한 것:
+
+```bash
+PORT=9000 npm run dev:local              # API 포트
+HANMADI_DATA=D:/한마디.json npm run dev:local   # 기록 파일 위치
+npm run api:local                        # API 서버만 따로
+```
+
+### 클라우드와 무엇을 공유하나
+
+라우팅과 검증(280자 제한, `mood` 값, 날짜 형식, 365개 상한)은
+`infra/lambda/core.js` 한 곳에 있고, 클라우드와 로컬이 그것을 같이 쓴다.
+다른 것은 저장소뿐이다.
+
+```
+                    ┌─ dynamo-store.js ─▶ DynamoDB   (클라우드)
+core.js ─ 주입 ─────┤
+                    └─ file-store.js ───▶ data.json  (로컬)
+```
+
+그래서 로컬에서 통과한 입력은 클라우드에서도 통과한다. 검증을 양쪽에
+따로 적어 두면 언젠가 갈라지는데, 그 지점을 아예 없앴다.
+
+`local/data.json` 이 깨져 있으면 서버가 뜨지 않고 멈춘다. 빈 값으로
+덮어쓰면 기록이 그대로 사라지기 때문이다.
+
+## 로컬에서 실행하기 (클라우드에 붙여서)
 
 백엔드가 먼저 있어야 한다. 아래 [백엔드 배포](#백엔드-배포)를 참고해
 `ApiUrl` / `UserPoolId` / `UserPoolClientId` 를 얻어 둔다.
@@ -217,6 +278,9 @@ git push origin main:oneline-retro
   버려지던 규칙이었다.
 - 실습용 설정이라 DynamoDB 테이블과 User Pool 이 `RemovalPolicy.DESTROY` 다.
   실제 서비스라면 `RETAIN` 이어야 한다.
+- **클라우드에 쌓인 기록을 로컬로 옮기는 길이 아직 없다.** 로컬 모드는 빈
+  `local/data.json` 에서 시작한다. AWS 를 내리기 전에 옮기려면 내보내기와
+  가져오기가 필요하다.
 
 ## 정리
 

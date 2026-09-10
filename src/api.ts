@@ -1,5 +1,5 @@
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { API_URL } from './amplify-config';
+import { API_URL, IS_LOCAL } from './amplify-config';
 import type { Mood } from './moods';
 
 export interface Entry {
@@ -14,6 +14,9 @@ export interface Entry {
  * 그 조건을 만족하는 건 액세스 토큰이 아니라 ID 토큰이다.
  */
 async function authHeader(): Promise<Record<string, string>> {
+  // 로컬 서버는 127.0.0.1 에만 붙고 사용자를 하나로 고정한다. 보낼 토큰이 없다.
+  if (IS_LOCAL) return {};
+
   const session = await fetchAuthSession();
   const token = session.tokens?.idToken?.toString();
   if (!token) throw new Error('로그인이 필요합니다.');

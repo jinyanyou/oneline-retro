@@ -29,3 +29,7 @@ dist-ssr
 # CDK
 infra/cdk.out
 infra/node_modules
+
+# 로컬 모드 기록 파일
+local/data.json
+local/data.json.tmp

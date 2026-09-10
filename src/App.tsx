@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isConfigured } from './amplify-config';
+import { isConfigured, IS_LOCAL } from './amplify-config';
 import { deleteEntry, listEntries, saveEntry, type Entry } from './api';
 import { MOODS, moodOf, type Mood } from './moods';
 import { formatDate, todayKey } from './date';
@@ -28,8 +28,11 @@ type TabId = (typeof TABS)[number]['id'];
 /**
  * 메뉴 막대. 파일 메뉴만 실제로 열리고 나머지는 장식이다.
  * 로그아웃이 제목 표시줄 X 버튼에만 있어서 아무도 못 찾았다.
+ *
+ * 로컬 모드에는 로그아웃할 세션이 없다. 그때는 파일 메뉴도 나머지처럼
+ * 흐리게 두어, 열었다가 빈 메뉴를 보는 일이 없게 한다.
  */
-function MenuBar({ onSignOut }: { onSignOut: () => void }) {
+function MenuBar({ onSignOut }: { onSignOut: (() => void) | null }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -47,6 +50,19 @@ function MenuBar({ onSignOut }: { onSignOut: () => void }) {
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  if (!onSignOut) {
+    return (
+      <div className="menubar">
+        {['파', '편', '보', '도'].map((key, i) => (
+          <span key={key} className="menu-title dim" aria-hidden="true">
+            <u>{key}</u>
+            {['일', '집', '기', '움말'][i]}
+          </span>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="menubar">
@@ -112,6 +128,12 @@ function SetupNotice() {
                 </li>
                 <li>개발 서버를 다시 시작합니다.</li>
               </ol>
+              <p className="dialog-lead">AWS 없이 쓰려면</p>
+              <p>
+                <code>npm run dev:local</code> 로 실행하면 이 컴퓨터의{' '}
+                <code>local/data.json</code> 에 기록이 쌓입니다. 로그인도,
+                계정도 필요 없습니다.
+              </p>
             </div>
           </div>
         </div>
@@ -124,7 +146,13 @@ function SetupNotice() {
   );
 }
 
-function Journal({ email, signOut }: { email: string; signOut: () => void }) {
+function Journal({
+  email,
+  signOut,
+}: {
+  email: string;
+  signOut: (() => void) | null;
+}) {
   const today = useMemo(() => todayKey(), []);
 
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -234,7 +262,7 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
       <div className="window app">
         <TitleBar
           title={`한마디 - ${email || '사용자'}`}
-          onClose={signOut}
+          onClose={signOut ?? undefined}
           closeLabel="로그아웃"
         />
         <MenuBar onSignOut={signOut} />
@@ -431,6 +459,9 @@ function EntryList({
 
 export default function App() {
   if (!isConfigured) return <SetupNotice />;
+
+  // 로컬 모드는 로그인을 거치지 않는다. 이 컴퓨터에 나 혼자 쓴다.
+  if (IS_LOCAL) return <Journal email="로컬" signOut={null} />;
 
   return (
     <Auth>

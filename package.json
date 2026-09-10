@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:local": "node local/dev.js",
+    "api:local": "node local/server.js"
   },
   "dependencies": {
     "aws-amplify": "^6.20.0",
