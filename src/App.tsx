@@ -7,6 +7,7 @@ import { formatDate, todayKey } from './date';
 import { Auth } from './Auth';
 import { Calendar } from './Calendar';
 import { ConfirmDialog } from './ConfirmDialog';
+import { Notice } from './Notice';
 import { Stats } from './Stats';
 import { TitleBar } from './TitleBar';
 import './App.css';
@@ -133,6 +134,11 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
   const [tab, setTab] = useState<TabId>('list');
   // 삭제를 기다리는 날짜. 확인 대화 상자를 띄우는 조건이기도 하다.
   const [pending, setPending] = useState<string | null>(null);
+  // 저장이 끝났음을 알리는 문구. 있으면 알림 상자가 뜬다.
+  const [notice, setNotice] = useState<string | null>(null);
+  // Notice 가 이 함수를 타이머에 건다. 매번 새로 만들면 다시 그려질 때마다
+  // 타이머가 처음부터 시작해서 알림이 닫히지 않는다.
+  const dismissNotice = useCallback(() => setNotice(null), []);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,6 +199,7 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
         ),
       );
       setSavedAt(new Date().toLocaleTimeString('ko-KR'));
+      setNotice(`${formatDate(entry.date)} 기록을 저장했습니다.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : '저장하지 못했습니다.');
     } finally {
@@ -349,6 +356,10 @@ function Journal({ email, signOut }: { email: string; signOut: () => void }) {
           <span className="status-panel">{today}</span>
         </div>
       </div>
+
+      {notice && (
+        <Notice title="한마디" message={notice} onClose={dismissNotice} />
+      )}
 
       {pending && (
         <ConfirmDialog

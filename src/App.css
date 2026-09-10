@@ -472,6 +472,14 @@ textarea:focus {
   color: var(--light);
 }
 
+/* 알림 상자의 파란 동그라미 i. 그 시절 아이콘은 세리프 이탤릭이었다. */
+.dialog-icon.info {
+  background: var(--title-a);
+  color: var(--light);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+}
+
 .steps {
   margin: 0;
   padding-left: 1.35rem;
@@ -865,12 +873,14 @@ textarea:focus-visible {
   background: rgba(0, 0, 0, 0.3);
 }
 
-.window.confirm {
+.window.confirm,
+.window.notice {
   max-width: 23rem;
   margin: 0;
 }
 
-.window.confirm .window-body {
+.window.confirm .window-body,
+.window.notice .window-body {
   gap: 4px;
 }
 
@@ -879,4 +889,40 @@ textarea:focus-visible {
   justify-content: center;
   gap: 8px;
   padding: 4px 0 6px;
+}
+
+/* ---------- 스스로 닫히는 알림 ---------- */
+
+/* 화면 전체를 덮되 클릭은 그대로 흘려보낸다.
+   알림이 떠 있어도 뒤의 입력 칸을 계속 쓸 수 있어야 한다. */
+.notice-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.window.notice {
+  pointer-events: auto;
+  cursor: default;
+  /* 그 시절엔 부드러운 전환이 없었다. 두 칸으로 끊어 튀어나오게 한다. */
+  animation: notice-in 120ms steps(2, end);
+}
+
+@keyframes notice-in {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .window.notice {
+    animation: none;
+  }
 }
