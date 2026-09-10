@@ -1044,6 +1044,11 @@ textarea:focus-visible {
   color: var(--title-a);
 }
 
+/* 만든 사람은 구분선 위, 그 시절 정보 상자가 저작권 줄을 두던 자리다. */
+.about-by {
+  margin: 7px 0 0;
+}
+
 .about-facts {
   margin: 0 12px;
   padding: 8px 10px;
@@ -1053,9 +1058,22 @@ textarea:focus-visible {
 
 .about-facts dl {
   display: grid;
-  grid-template-columns: 3.5rem 1fr;
+  grid-template-columns: 4rem 1fr;
   gap: 3px 8px;
   margin: 0;
+}
+
+/* 만든 사람 쪽과 지금 상태 쪽을 갈라 놓는다 */
+.about-rule {
+  grid-column: 1 / -1;
+  height: 0;
+  margin: 4px 0;
+  border-top: 1px solid var(--shadow);
+  border-bottom: 1px solid var(--light);
+}
+
+.about-facts a {
+  color: var(--link);
 }
 
 .about-facts dt {

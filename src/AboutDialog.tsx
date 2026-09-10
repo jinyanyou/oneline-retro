@@ -50,11 +50,31 @@ export function AboutDialog({
             <div>
               <p className="about-name">한마디</p>
               <p className="muted">하루를 한마디로 기록하는 회고 노트</p>
+              <p className="about-by">
+                만든 사람 <b>jinyanyou</b>
+              </p>
             </div>
           </div>
 
           <div className="about-facts">
             <dl>
+              <dt>GitHub</dt>
+              <dd>
+                <a
+                  href="https://github.com/jinyanyou/oneline-retro"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  jinyanyou/oneline-retro
+                </a>
+              </dd>
+              <dt>이메일</dt>
+              <dd>
+                <a href="mailto:yummyday007@gmail.com">yummyday007@gmail.com</a>
+              </dd>
+
+              <div className="about-rule" role="separator" />
+
               <dt>사용자</dt>
               <dd>{email || '알 수 없음'}</dd>
               <dt>기록</dt>
